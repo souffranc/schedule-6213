@@ -1,0 +1,24 @@
+const DAY_SHORT=['ПН','ВТ','СР','ЧТ','ПТ','СБ','ВС'];
+const MONTHS=['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+const SEMESTER_START='2026-09-01', SEMESTER_END='2026-12-28';
+const $=id=>document.getElementById(id);
+let lessons=[], selectedDate=SEMESTER_START, weekStarts=[];
+const dateFrom=s=>new Date(`${s}T12:00:00`);
+const iso=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const addDays=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x};
+const sameDay=(a,b)=>iso(a)===iso(b);
+const weekNumber=d=>{const delta=Math.round((dateFrom(iso(d))-dateFrom(SEMESTER_START))/86400000);return delta<6?1:Math.floor((delta-6)/7)+2};
+function makeWeeks(){const first=dateFrom(SEMESTER_START);weekStarts=[first];let monday=addDays(first,6);while(monday<=dateFrom(SEMESTER_END)){weekStarts.push(monday);monday=addDays(monday,7)}}
+function weekStartFor(d){const n=weekNumber(d);return weekStarts[Math.max(0,n-1)]||weekStarts[0]}
+function formatDate(d){return `${d.getDate()} ${MONTHS[d.getMonth()]}`}
+function chooseDate(value){const d=dateFrom(value);if(value<SEMESTER_START||value>SEMESTER_END)return;selectedDate=value;render()}
+function render(){const selected=dateFrom(selectedDate),week=weekNumber(selected),start=weekStartFor(selected);$('monthLabel').textContent=`СЕМЕСТР · 2026`;$('selectedDateTitle').textContent=formatDate(selected);$('weekCaption').textContent=`НЕДЕЛЯ ${week}`;$('dayHeading').textContent=['Воскресенье','Понедельник','Вторник','Среда','Четверг','Пятница','Суббота'][selected.getDay()];$('datePicker').value=selectedDate;
+ const strip=$('daysStrip');strip.innerHTML='';for(let i=0;i<7;i++){const d=addDays(start,i),key=iso(d),outside=key<SEMESTER_START||key>SEMESTER_END||weekNumber(d)!==week;const b=document.createElement('button');b.className='day-button'+(key===selectedDate?' selected':'')+(key===iso(new Date())?' today':'')+(outside?' outside':'');b.type='button';b.disabled=outside;b.innerHTML=`<span class="day-number">${d.getDate()}</span><span class="day-name">${DAY_SHORT[d.getDay()===0?6:d.getDay()-1]}</span>`;b.addEventListener('click',()=>chooseDate(key));strip.append(b)}
+ const dayLessons=lessons.filter(x=>x.date===selectedDate).sort((a,b)=>a.pair-b.pair);$('lessonCount').textContent=dayLessons.length?`${dayLessons.length} ${dayLessons.length===1?'ЗАНЯТИЕ':'ЗАНЯТИЯ'}`:'НЕТ ЗАНЯТИЙ';const list=$('lessons');list.innerHTML='';if(!dayLessons.length){list.innerHTML='<div class="empty-state"><div class="empty-icon">✓</div><strong>На этот день занятий нет</strong><p>Можно выдохнуть. Или хотя бы сделать вид, что так и было задумано.</p></div>'}else{for(const x of dayLessons){const card=document.createElement('article');card.className='lesson-card '+(x.type==='Лекция'?'lecture':'practice');const teacher=x.teacher?`<span class="teacher" title="${escapeHtml(x.teacher)}">${escapeHtml(x.teacher)}</span>`:'';const sub=x.subgroup==='13Б'?'<span class="subgroup-tag">13Б</span>':'';card.innerHTML=`<div class="lesson-top"><div class="time-wrap"><span class="pair-number">${x.pair}</span><span>${x.start}–${x.end}</span></div>${teacher}</div><div class="subject">${escapeHtml(x.subject)}</div><div class="lesson-bottom"><span class="room"><span class="room-icon">⌖</span>${escapeHtml(x.room)}${sub}</span><span class="lesson-type">${x.type}</span></div>`;list.append(card)}}
+ const scroller=$('weekScroller');scroller.innerHTML='';weekStarts.forEach((ws,i)=>{const n=i+1,b=document.createElement('button');b.className='week-button'+(n===week?' selected':'');b.type='button';b.textContent=`Неделя ${n}`;b.addEventListener('click',()=>{const target=ws;const valid=target<dateFrom(SEMESTER_START)?dateFrom(SEMESTER_START):target;chooseDate(iso(valid))});scroller.append(b);if(n===week)setTimeout(()=>b.scrollIntoView({block:'nearest',inline:'center',behavior:'smooth'}),0)})}
+function escapeHtml(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+$('todayButton').addEventListener('click',()=>{const t=iso(new Date());chooseDate(t<SEMESTER_START?SEMESTER_START:t>SEMESTER_END?SEMESTER_END:t)});
+$('datePicker').addEventListener('change',e=>{if(e.target.value)chooseDate(e.target.value)});
+makeWeeks();
+fetch(new URL('./data/schedule.json',document.baseURI)).then(r=>{if(!r.ok)throw new Error('Не удалось загрузить расписание');return r.json()}).then(data=>{lessons=data.lessons||[];const now=iso(new Date());selectedDate=now>=SEMESTER_START&&now<=SEMESTER_END?now:SEMESTER_START;render()}).catch(err=>{$('lessons').innerHTML=`<div class="empty-state"><strong>Не удалось загрузить расписание</strong><p>${escapeHtml(err.message)}</p></div>`});
+if('serviceWorker'in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register(new URL('./service-worker.js',document.baseURI)).catch(()=>{}))}

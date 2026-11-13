@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#174C2B">
+  <meta name="description" content="Расписание занятий группы 6213, подгруппа 13Б">
+  <title>Расписание 6213</title>
+  <link rel="manifest" href="./manifest.json">
+  <link rel="icon" href="./assets/icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="./assets/icons/icon-180.png">
+  <link rel="stylesheet" href="./css/style.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <img class="brand-mark" src="./assets/icons/icon.svg" alt="" width="34" height="34">
+      <div class="heading"><h1>Расписание</h1><p>Группа 6213 · подгруппа Б</p></div>
+      <button class="today-button" id="todayButton" type="button">Сегодня</button>
+    </header>
+
+    <main>
+      <section class="date-panel" aria-label="Выбор даты">
+        <div class="date-heading">
+          <div><span class="eyebrow" id="monthLabel">Семестр</span><h2 id="selectedDateTitle">Загрузка…</h2></div>
+          <label class="calendar-button" title="Выбрать дату">
+            <span aria-hidden="true">▦</span><input id="datePicker" type="date" min="2026-09-01" max="2026-12-28" aria-label="Выбрать дату">
+          </label>
+        </div>
+        <div class="days-strip" id="daysStrip"></div>
+      </section>
+
+      <section class="schedule-section">
+        <div class="section-heading"><div><span class="eyebrow" id="weekCaption">НЕДЕЛЯ</span><h2 id="dayHeading">Занятия</h2></div><span class="lesson-count" id="lessonCount"></span></div>
+        <div class="lessons" id="lessons" aria-live="polite"><div class="loading">Загружаем расписание…</div></div>
+      </section>
+    </main>
+
+    <footer class="week-footer">
+      <div class="week-scroller" id="weekScroller" aria-label="Выбор учебной недели"></div>
+      <div class="footer-note"><span class="status-dot"></span> Расписание на осенний семестр 2026</div>
+    </footer>
+  </div>
+  <script src="./js/app.js" defer></script>
+</body>
+</html>
